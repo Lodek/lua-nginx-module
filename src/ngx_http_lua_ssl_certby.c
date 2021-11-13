@@ -1162,6 +1162,34 @@ ngx_http_lua_ffi_parse_pem_cert(const u_char *pem, size_t pem_len,
 }
 
 
+// FIXME  should I add checks for an engine version / nginx version?
+void *
+ngx_http_lua_ffi_load_engine_priv_key(const u_char *engine_id, const u_char priv_key_id,
+    char **err)
+{
+    // FIXME formatting
+    ENGINE      *engine;
+    EVP_PKEY    *pkey;
+
+    engine = ENGINE_by_id((char *) engine_id);
+    if (engine == NULL) {
+        *err = "ENGINE_by_id() failed";
+        ENGINE_free(engine);
+        return NULL;
+    }
+
+    pkey = ENGINE_load_private_key((char *) priv_key_id, 0, 0);
+    if (pkey == NULL) {
+        *err = "ENGINE_load_private_key() failed";
+        ENGINE_free(engine);
+        return NULL;
+    }
+
+    ENGINE_free(engine);
+    return pkey;
+}
+
+
 void
 ngx_http_lua_ffi_free_cert(void *cdata)
 {
