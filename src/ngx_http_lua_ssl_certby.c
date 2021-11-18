@@ -1162,7 +1162,7 @@ ngx_http_lua_ffi_parse_pem_cert(const u_char *pem, size_t pem_len,
 }
 
 
-// FIXME  should I add checks for an engine version / nginx version?
+#ifndef OPENSSL_NO_ENGINE
 void *
 ngx_http_lua_ffi_load_engine_priv_key(const u_char *engine_id, const u_char priv_key_id,
     char **err)
@@ -1178,16 +1178,25 @@ ngx_http_lua_ffi_load_engine_priv_key(const u_char *engine_id, const u_char priv
         return NULL;
     }
 
+     if(!ENGINE_init(engine)) {
+         *err = "ENGINE_init() failed";
+         ENGINE_free(engine);
+         return NULL;
+     }
+
     pkey = ENGINE_load_private_key((char *) priv_key_id, 0, 0);
     if (pkey == NULL) {
         *err = "ENGINE_load_private_key() failed";
+        ENGINE_finish(engine)
         ENGINE_free(engine);
         return NULL;
     }
 
+    ENGINE_finish(engine)
     ENGINE_free(engine);
     return pkey;
 }
+#endif
 
 
 void
