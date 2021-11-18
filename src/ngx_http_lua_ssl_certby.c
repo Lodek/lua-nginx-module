@@ -1164,36 +1164,37 @@ ngx_http_lua_ffi_parse_pem_cert(const u_char *pem, size_t pem_len,
 
 #ifndef OPENSSL_NO_ENGINE
 void *
-ngx_http_lua_ffi_load_engine_priv_key(const u_char *engine_id, const u_char priv_key_id,
+ngx_http_lua_ffi_load_engine_priv_key(const u_char *engine_id, const u_char pkey_id,
     char **err)
 {
-    // FIXME formatting
-    ENGINE      *engine;
+    ENGINE      *e;
     EVP_PKEY    *pkey;
 
-    engine = ENGINE_by_id((char *) engine_id);
-    if (engine == NULL) {
+    e = ENGINE_by_id((char *) engine_id);
+
+    if (e == NULL) {
         *err = "ENGINE_by_id() failed";
-        ENGINE_free(engine);
+        ENGINE_free(e);
         return NULL;
     }
 
-     if(!ENGINE_init(engine)) {
-         *err = "ENGINE_init() failed";
-         ENGINE_free(engine);
-         return NULL;
-     }
+    if(!ENGINE_init(e)) {
+        *err = "ENGINE_init() failed";
+        ENGINE_free(e);
+        return NULL;
+    }
 
-    pkey = ENGINE_load_private_key((char *) priv_key_id, 0, 0);
+    pkey = ENGINE_load_private_key((char *) pkey_id, 0, 0);
+
     if (pkey == NULL) {
         *err = "ENGINE_load_private_key() failed";
-        ENGINE_finish(engine)
-        ENGINE_free(engine);
+        ENGINE_finish(e);
+        ENGINE_free(e);
         return NULL;
     }
 
-    ENGINE_finish(engine)
-    ENGINE_free(engine);
+    ENGINE_finish(e);
+    ENGINE_free(e);
     return pkey;
 }
 #endif
